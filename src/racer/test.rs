@@ -1122,3 +1122,47 @@ fn handles_default_arm() {
     assert_eq!("o", got.matchstr);
     assert_eq!(9, got.point);
 }
+
+
+#[test]
+fn finds_trait_from_super() {
+    let parent = "
+    mod child;
+
+    pub trait foo {
+        fn bar(&self);
+    }
+    ";
+
+    let child="
+    use super::foo;
+
+    struct zop;
+
+    impl foo for zop {
+        fn bar() {
+            println!(\"barbarbar\");
+        }
+    }
+    ";
+
+    let basedir = tmpname();
+    fs::create_dir(&basedir).unwrap();
+
+    let parentpath = basedir.join("mod.rs");
+    write_file(&parentpath, parent);
+    let childpath = basedir.join("child.rs");
+    write_file(&childpath, child);
+    let pos = scopes::coords_to_point(child, 6, 10);
+    let got = find_definition(child, &childpath, pos).unwrap();
+
+    fs::remove_dir_all(&basedir).unwrap();
+    assert_eq!(got.matchstr,"foo".to_string());
+    assert_eq!(got.filepath, parentpath);
+
+    let (def_row,def_col) = scopes::point_to_coords(parent, got.point);
+
+    assert_eq!(4, def_row);
+    assert_eq!(14, def_col);
+
+}

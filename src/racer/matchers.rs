@@ -481,7 +481,10 @@ pub fn match_use(msrc: &str, blobstart: usize, blobend: usize,
         debug!("found use: {} in |{}|", searchstr, blob);
         let use_item = ast::parse_use(String::from_str(blob));
 
+        debug!("ast: {:?}", use_item);
+
         let ident = use_item.ident.unwrap_or("".to_string());
+
         for path in use_item.paths.into_iter() {
             let len = path.segments.len();
 
@@ -493,6 +496,9 @@ pub fn match_use(msrc: &str, blobstart: usize, blobend: usize,
                     // search in a bit.
                 } else {
                     let path = hack_remove_self_and_super_in_modpaths(path);
+
+                    debug!("cleaned path: {:?}", path);
+
                     for m in resolve_path(&path, filepath, 0, ExactMatch, BothNamespaces) {
                         out.push(m);
                         if let ExactMatch = search_type  {
